@@ -26,3 +26,4 @@ services:
     name: skillbridge-cache
     plan: free
     region: oregon
+    ipAllowList: []
