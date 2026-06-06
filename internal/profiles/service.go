@@ -4,6 +4,7 @@ package profiles
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"skillbridge-backend/internal/events"
 	"skillbridge-backend/pkg/errors"
 	"skillbridge-backend/pkg/logger"
@@ -50,8 +51,13 @@ func (s *profileService) UpdateProfile(ctx context.Context, userID uuid.UUID, un
 		return nil, errors.NewNotFoundError("profile not found", nil)
 	}
 
+	level := AcademicLevel(currentLevel)
+	if !level.IsValid() {
+		return nil, errors.NewValidationError(fmt.Sprintf("invalid academic level: %s", currentLevel), nil)
+	}
+
 	p.University = university
-	p.CurrentLevel = currentLevel
+	p.CurrentLevel = level
 
 	err = s.repo.Update(ctx, p)
 	if err != nil {
@@ -140,7 +146,7 @@ func (s *profileService) SubscribeToEvents() {
 		profile := &Profile{
 			UserID:             uid,
 			University:         payload.University,
-			CurrentLevel:       payload.CurrentLevel,
+			CurrentLevel:       AcademicLevel(payload.CurrentLevel),
 			EmployabilityScore: 0,
 			TotalXP:            0,
 			Skills:             []SkillItem{},

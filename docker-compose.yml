@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -8,10 +6,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - APP_ENV=production
-      - APP_PORT=8080
-      - JWT_SECRET=production-secret-key-please-rotate
-      - JWT_REFRESH_SECRET=production-refresh-secret-key-please-rotate
+      - APP_ENV=${APP_ENV:-production}
+      - APP_PORT=${APP_PORT:-8080}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
@@ -20,14 +18,17 @@ services:
       - DB_SSLMODE=disable
       - REDIS_ADDR=redis:6379
       - NATS_URL=nats://nats:4222
-      - JUDGE0_URL=https://judge0-ce.p.rapidapi.com
-      - JUDGE0_KEY=your-rapidapi-judge0-key
-      - EXTERNAL_AI_URL=https://api.external-ai.com
-      - EXTERNAL_AI_KEY=your-external-ai-key
+      - JUDGE0_URL=${JUDGE0_URL}
+      - JUDGE0_KEY=${JUDGE0_KEY}
+      - EXTERNAL_AI_URL=${EXTERNAL_AI_URL}
+      - EXTERNAL_AI_KEY=${EXTERNAL_AI_KEY}
     depends_on:
-      - postgres
-      - redis
-      - nats
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: always
 
   postgres:
@@ -40,6 +41,26 @@ services:
       - POSTGRES_DB=skillbridge
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d skillbridge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  nats:
+    image: nats:2.9-alpine
+    ports:
+      - "4222:4222"
+      - "8222:8222" # NATS management console monitoring port
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8222/varz"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
 
   redis:
@@ -48,13 +69,14 @@ services:
       - "6379:6379"
     volumes:
       - redisdata:/data
-    restart: always
-
-  nats:
-    image: nats:2.9-alpine
-    ports:
-      - "4222:4222"
-      - "8222:8222" # NATS management console monitoring port
+    depends_on:
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
 
 volumes:
