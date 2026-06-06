@@ -1,0 +1,194 @@
+### Skillbridge Monolithic Backend API Test Collection
+# This file can be run directly using the VS Code "REST Client" extension or Thunder Client.
+# It acts as a lightweight, IDE-integrated alternative to Postman.
+
+@baseUrl = http://localhost:8080/api
+@authToken = {{login.response.body.access_token}}
+@refreshToken = {{login.response.body.refresh_token}}
+
+### -------------------------------------------------------------
+### 🔐 Authentication Domain
+### -------------------------------------------------------------
+
+# @name registerStudent
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "student@university.edu",
+  "password": "securepassword123",
+  "role": "student",
+  "university": "State University",
+  "current_level": "Undergraduate"
+}
+
+###
+
+# @name registerRecruiter
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "recruiter@company.com",
+  "password": "securepassword123",
+  "role": "recruiter",
+  "university": "Industry Partner",
+  "current_level": "Professional"
+}
+
+###
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "student@university.edu",
+  "password": "securepassword123"
+}
+
+###
+
+# @name rotateTokens
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### -------------------------------------------------------------
+### 👤 Student Profiles & Roadmaps
+### -------------------------------------------------------------
+
+### Get Account Info
+GET {{baseUrl}}/user/profile
+Authorization: Bearer {{authToken}}
+
+###
+
+### Get Student Profile
+GET {{baseUrl}}/profile
+Authorization: Bearer {{authToken}}
+
+###
+
+### Update Student Profile
+PUT {{baseUrl}}/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "university": "State University (Honors Division)",
+  "current_level": "Senior Undergraduate"
+}
+
+###
+
+### Get Branching Learning Path (Roadmap DAG)
+GET {{baseUrl}}/roadmap
+Authorization: Bearer {{authToken}}
+
+###
+
+### Complete Learning Roadmap Node
+POST {{baseUrl}}/roadmap/complete
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "node_id": "1"
+}
+
+### -------------------------------------------------------------
+### 💻 Code Sandbox Workspace
+### -------------------------------------------------------------
+
+### Execute Code Submission (Runs Judge0 & triggers AI feedback)
+POST {{baseUrl}}/workspace/execute
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "language": "python",
+  "code": "def hello():\n    print('Hello from the Skillbridge sandbox!')\n\nhello()"
+}
+
+###
+
+### View Execution Submission History
+GET {{baseUrl}}/workspace/history
+Authorization: Bearer {{authToken}}
+
+### -------------------------------------------------------------
+### 🤖 AI Orchestrator Integration
+### -------------------------------------------------------------
+
+### Analyze CV (Upload Raw Resume Text)
+POST {{baseUrl}}/ai/cv-analyze
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "event": "cv.uploaded",
+  "request_id": "req-12345",
+  "user_id": "user-uuid-placeholder",
+  "resume_url": "https://storage.skillbridge.edu/cv/candidate123.pdf",
+  "target_role": "Backend Go Engineer",
+  "region": "Lagos, Nigeria"
+}
+
+###
+
+### Retrieve Custom Skill Gap Intelligence
+POST {{baseUrl}}/ai/skill-gap
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "request_id": "gap-req-123",
+  "user_id": "user-uuid-placeholder",
+  "current_skills": ["Go", "PostgreSQL"],
+  "target_role": "DevOps Engineer",
+  "region": "London, UK"
+}
+
+### -------------------------------------------------------------
+### 🏢 Recruiter Domain
+### -------------------------------------------------------------
+
+# @name recruiterLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "recruiter@company.com",
+  "password": "securepassword123"
+}
+
+###
+
+# @name postJob
+POST {{baseUrl}}/jobs
+Authorization: Bearer {{recruiterLogin.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "title": "Backend Software Engineer",
+  "company": "Lexi Dev LLC",
+  "description": "Develop and maintain robust, containerized modular monolith backends written in Go.",
+  "skills_required": ["Go", "PostgreSQL", "Docker", "Redis"]
+}
+
+###
+
+### Match Candidates to Job ID (Requires Recruiter/Admin rights)
+# Replace `job_id` query parameter with a real UUID returned by the postJob endpoint
+GET {{baseUrl}}/jobs/match?job_id=REPLACE_WITH_REAL_JOB_UUID
+Authorization: Bearer {{recruiterLogin.response.body.access_token}}
+
+###
+
+### Get Active Job Postings
+GET {{baseUrl}}/jobs
+Authorization: Bearer {{authToken}}
