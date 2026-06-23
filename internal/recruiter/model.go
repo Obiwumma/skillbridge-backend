@@ -28,11 +28,15 @@ func (j *JobPosting) SkillsJSON() ([]byte, error) {
 
 // CandidateMatch holds computed matching scores, matching justifications, and profiles of candidate matches.
 type CandidateMatch struct {
-	UserID             uuid.UUID `json:"user_id"`
-	Email              string    `json:"email"`
-	University         string    `json:"university"`
-	EmployabilityScore int       `json:"employability_score"`
-	TotalXP            int       `json:"total_xp"`
-	MatchScore         int       `json:"match_score"`
-	MatchReasons       []string  `json:"match_reasons"`
+	UserID                  uuid.UUID `json:"user_id"`
+	Email                   string    `json:"email"`
+	University              string    `json:"university"`
+	EmployabilityScore      int       `json:"employability_score"`
+	TotalXP                 int       `json:"total_xp"`
+	MatchScore              int       `json:"match_score"`
+	MatchReasons            []string  `json:"match_reasons"`
+	ArchitecturalVelocity   int       `json:"architectural_velocity,omitempty"`
+	DebuggingEfficiency     int       `json:"debugging_efficiency,omitempty"`
+	CommunicationClarity    int       `json:"communication_clarity,omitempty"`
+	PremiumVettingPassed    bool      `json:"premium_vetting_passed"`
 }

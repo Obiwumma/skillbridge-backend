@@ -130,9 +130,21 @@ func (r *sqlRecruiterRepository) GetJobByID(ctx context.Context, jobID uuid.UUID
 // GetCandidatesForMatch scans profiles of students eligible for enterprise recruitment matching.
 func (r *sqlRecruiterRepository) GetCandidatesForMatch(ctx context.Context) ([]CandidateMatch, error) {
 	query := `
-		SELECT u.id, u.email, p.university, p.employability_score, p.total_xp, p.skills
+		WITH LatestLedgers AS (
+			SELECT DISTINCT ON (user_id) 
+				user_id, architectural_velocity_score, debugging_loop_efficiency_score, communication_clarity_score
+			FROM assessment_ledgers
+			WHERE status = 'passed'
+			ORDER BY user_id, completed_at DESC
+		)
+		SELECT 
+			u.id, u.email, p.university, p.employability_score, p.total_xp, p.skills, p.premium_vetting_passed,
+			COALESCE(l.architectural_velocity_score, 0),
+			COALESCE(l.debugging_loop_efficiency_score, 0),
+			COALESCE(l.communication_clarity_score, 0)
 		FROM users u
 		INNER JOIN profiles p ON u.id = p.user_id
+		LEFT JOIN LatestLedgers l ON u.id = l.user_id
 		WHERE u.role = 'student'
 	`
 	rows, err := r.db.QueryContext(ctx, query)
@@ -154,6 +166,10 @@ func (r *sqlRecruiterRepository) GetCandidatesForMatch(ctx context.Context) ([]C
 			&c.EmployabilityScore,
 			&c.TotalXP,
 			&skillsBytes,
+			&c.PremiumVettingPassed,
+			&c.ArchitecturalVelocity,
+			&c.DebuggingEfficiency,
+			&c.CommunicationClarity,
 		)
 		if err != nil {
 			return nil, err

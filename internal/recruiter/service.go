@@ -90,6 +90,15 @@ func (s *recruiterService) MatchCandidates(ctx context.Context, jobID uuid.UUID)
 
 		score, reasons := s.calculateMatchScore(job.SkillsRequired, profile.Skills)
 
+		if c.PremiumVettingPassed {
+			reasons = append([]string{fmt.Sprintf("VETTING VERIFIED: Architectural Velocity (%d), Debugging Efficiency (%d), Communication (%d)", 
+				c.ArchitecturalVelocity, c.DebuggingEfficiency, c.CommunicationClarity)}, reasons...)
+			score += 10 // Bonus for passing rigorous assessment
+			if score > 100 {
+				score = 100
+			}
+		}
+
 		c.MatchScore = score
 		c.MatchReasons = reasons
 
@@ -97,6 +106,10 @@ func (s *recruiterService) MatchCandidates(ctx context.Context, jobID uuid.UUID)
 	}
 
 	sort.Slice(results, func(i, j int) bool {
+		// Premium vetting trumps standard matching
+		if results[i].PremiumVettingPassed != results[j].PremiumVettingPassed {
+			return results[i].PremiumVettingPassed
+		}
 		if results[i].MatchScore == results[j].MatchScore {
 			return results[i].EmployabilityScore > results[j].EmployabilityScore
 		}

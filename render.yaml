@@ -1,7 +1,6 @@
 databases:
   - name: skillbridge-db
     databaseName: skillbridge
-    user: postgres
     plan: free
     region: oregon
 

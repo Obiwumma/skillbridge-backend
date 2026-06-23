@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"skillbridge-backend/internal/ai_orchestrator"
+	"skillbridge-backend/internal/assessment"
 	"skillbridge-backend/internal/auth"
 	"skillbridge-backend/internal/cache"
 	"skillbridge-backend/internal/db"
@@ -60,6 +61,10 @@ func main() {
 	workspaceRepo := workspace.NewWorkspaceRepository(db.DB)
 	workspaceService := workspace.NewWorkspaceService(workspaceRepo, aiService)
 	workspaceHandler := workspace.NewWorkspaceHandler(workspaceService)
+
+	assessmentRepo := assessment.NewAssessmentRepository(db.DB)
+	assessmentService := assessment.NewAssessmentService(assessmentRepo, profileService)
+	assessmentHandler := assessment.NewAssessmentHandler(assessmentService)
 
 	recruiterRepo := recruiter.NewRecruiterRepository(db.DB)
 	recruiterService := recruiter.NewRecruiterService(recruiterRepo, profileService)
@@ -114,6 +119,10 @@ func main() {
 
 			private.POST("/ai/cv-analyze", aiHandler.CVAnalyze)
 			private.POST("/ai/skill-gap", aiHandler.SkillGap)
+
+			private.POST("/assessment/start", assessmentHandler.StartAssessment)
+			private.POST("/assessment/session/start", assessmentHandler.StartSession)
+			private.POST("/assessment/session/submit", assessmentHandler.SubmitSession)
 
 			recruiterPriv := private.Group("/jobs")
 			recruiterPriv.Use(middleware.RequireRole(users.RoleRecruiter, users.RoleAdmin))
